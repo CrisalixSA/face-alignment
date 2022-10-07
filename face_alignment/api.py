@@ -1,8 +1,6 @@
 import torch
 import warnings
 from enum import IntEnum
-from skimage import io
-import numpy as np
 from distutils.version import LooseVersion
 
 from .utils import *
@@ -28,32 +26,14 @@ class NetworkSize(IntEnum):
     LARGE = 4
 
 
-default_model_urls = {
-    '2DFAN-4': 'https://www.adrianbulat.com/downloads/python-fan/2DFAN4-cd938726ad.zip',
-    '3DFAN-4': 'https://www.adrianbulat.com/downloads/python-fan/3DFAN4-4a694010b9.zip',
-    'depth': 'https://www.adrianbulat.com/downloads/python-fan/depth-6c4283c0e0.zip',
-}
-
-models_urls = {
-    '1.6': {
-        '2DFAN-4': 'https://www.adrianbulat.com/downloads/python-fan/2DFAN4_1.6-c827573f02.zip',
-        '3DFAN-4': 'https://www.adrianbulat.com/downloads/python-fan/3DFAN4_1.6-ec5cf40a1d.zip',
-        'depth': 'https://www.adrianbulat.com/downloads/python-fan/depth_1.6-2aa3f18772.zip',
-    },
-    '1.5': {
-        '2DFAN-4': 'https://www.adrianbulat.com/downloads/python-fan/2DFAN4_1.5-a60332318a.zip',
-        '3DFAN-4': 'https://www.adrianbulat.com/downloads/python-fan/3DFAN4_1.5-176570af4d.zip',
-        'depth': 'https://www.adrianbulat.com/downloads/python-fan/depth_1.5-bc10f98e39.zip',
-    },
-}
-
-
 class FaceAlignment:
-    def __init__(self, landmarks_type, network_size=NetworkSize.LARGE,
+    def __init__(self, landmarks_type, face_align_model_path, depth_pred_model_path, network_size=NetworkSize.LARGE,
                  device='cuda', flip_input=False, face_detector='sfd', face_detector_kwargs=None, verbose=False):
         self.device = device
         self.flip_input = flip_input
         self.landmarks_type = landmarks_type
+        self.face_align_model_path = face_align_model_path
+        self.depth_pred_model_path = depth_pred_model_path
         self.verbose = verbose
 
         if LooseVersion(torch.__version__) < LooseVersion('1.5.0'):
@@ -81,16 +61,14 @@ class FaceAlignment:
             network_name = '2DFAN-' + str(network_size)
         else:
             network_name = '3DFAN-' + str(network_size)
-        self.face_alignment_net = torch.jit.load(
-            load_file_from_url(models_urls.get(pytorch_version, default_model_urls)[network_name]))
+        self.face_alignment_net = torch.jit.load(face_align_model_path)
 
         self.face_alignment_net.to(device)
         self.face_alignment_net.eval()
 
         # Initialiase the depth prediciton network
         if landmarks_type == LandmarksType._3D:
-            self.depth_prediciton_net = torch.jit.load(
-                load_file_from_url(models_urls.get(pytorch_version, default_model_urls)['depth']))
+            self.depth_prediciton_net = torch.jit.load(depth_pred_model_path)
 
             self.depth_prediciton_net.to(device)
             self.depth_prediciton_net.eval()

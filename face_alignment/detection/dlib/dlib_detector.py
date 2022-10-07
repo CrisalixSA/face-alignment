@@ -3,21 +3,16 @@ import cv2
 import dlib
 
 from ..core import FaceDetector
-from ...utils import load_file_from_url
 
 
 class DlibDetector(FaceDetector):
-    def __init__(self, device, path_to_detector=None, verbose=False):
+    def __init__(self, device, path_to_detector, verbose=False):
         super().__init__(device, verbose)
 
         warnings.warn('Warning: this detector is deprecated. Please use a different one, i.e.: S3FD.')
 
         # Initialise the face detector
         if 'cuda' in device:
-            if path_to_detector is None:
-                path_to_detector = load_file_from_url(
-                    "https://www.adrianbulat.com/downloads/dlib/mmod_human_face_detector.dat")
-
             self.face_detector = dlib.cnn_face_detection_model_v1(path_to_detector)
         else:
             self.face_detector = dlib.get_frontal_face_detector()
