@@ -275,7 +275,6 @@ class FaceAlignment:
                     (pts_img, depth_pred * (1.0 / (256.0 / (200.0 * scale)))), 1) #Understand depth_pred modification!!!   
 
             logger.info(f'Last output: {pts_img.shape}')
-            logger.info(f'Last output: {pts_img}')
             landmarks.append(pts_img.numpy())
             landmarks_scores.append(scores)
         
