@@ -198,7 +198,6 @@ def get_preds_fromhm(hm, center=None, scale=None):
     """
     B, C, H, W = hm.shape
     hm_reshape = hm.reshape(B, C, H * W)
-    logger.info(f'HM shape: {hm_reshape.shape}')
     idx = np.argmax(hm_reshape, axis=-1)
     scores = np.take_along_axis(hm_reshape, np.expand_dims(idx, axis=-1), axis=-1).squeeze(-1)
     preds, preds_orig = _get_preds_fromhm(hm, idx, center, scale)
