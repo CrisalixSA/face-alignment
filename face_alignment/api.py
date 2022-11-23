@@ -1,18 +1,9 @@
-import time
-import matplotlib.pyplot as plt
-from PIL import Image
-import cv2
-
-import torchvision.transforms as T
-
 import torch
 import warnings
 from enum import IntEnum
 from distutils.version import LooseVersion
 
 from .utils import *
-
-from core_lib.utilities import logger
 
 class LandmarksType(IntEnum):
     """Enum class defining the type of landmarks to detect.
@@ -35,8 +26,8 @@ class NetworkSize(IntEnum):
 
 
 class FaceAlignment:
-    def __init__(self, landmarks_type, face_align_model_path, depth_pred_model_path, network_size=NetworkSize.LARGE,
-                 device='cuda', flip_input=False, face_detector='sfd', face_detector_kwargs=None, verbose=False):
+    def __init__(self, landmarks_type, face_align_model_path, depth_pred_model_path=None, network_size=NetworkSize.LARGE,
+                 device='cuda', flip_input=False, face_detector=None, face_detector_kwargs=None, verbose=False):
         self.device = device
         self.flip_input = flip_input
         self.landmarks_type = landmarks_type
@@ -59,10 +50,13 @@ class FaceAlignment:
             torch.backends.cudnn.benchmark = True
 
         # Get the face detector
-        face_detector_module = __import__('face_alignment.detection.' + face_detector,
-                                          globals(), locals(), [face_detector], 0)
-        face_detector_kwargs = face_detector_kwargs or {}
-        self.face_detector = face_detector_module.FaceDetector(device=device, verbose=verbose, **face_detector_kwargs)
+        if face_detector:
+            face_detector_module = __import__('face_alignment.detection.' + face_detector,
+                                            globals(), locals(), [face_detector], 0)
+            face_detector_kwargs = face_detector_kwargs or {}
+            self.face_detector = face_detector_module.FaceDetector(device=device, verbose=verbose, **face_detector_kwargs)
+        else:
+            self.face_detector = None
 
         # Initialise the face alignemnt networks
         if landmarks_type == LandmarksType._2D:
@@ -123,13 +117,6 @@ class FaceAlignment:
         """
         image = get_image(image_or_path)
 
-        # Input image size
-        ht = image.shape[0]
-        wd = image.shape[1]
-
-        # Force detected faces to be OUR bounding boxes
-        detected_faces=[np.array([0.0, np.float(ht), np.float(wd), 0.0])]
-
         if detected_faces is None:
             detected_faces = self.face_detector.detect_from_image(image.copy())
 
@@ -142,16 +129,20 @@ class FaceAlignment:
 
         landmarks = []
         landmarks_scores = []
-        for i, d in enumerate(detected_faces):            
+        for i, d in enumerate(detected_faces): 
             center = torch.tensor(
                 [d[2] - (d[2] - d[0]) / 2.0, d[3] - (d[3] - d[1]) / 2.0])
-            center[1] = center[1] - (d[3] - d[1]) * 0.12
-            scale = (d[2] - d[0] + d[3] - d[1]) / self.face_detector.reference_scale
+            if self.face_detector:
+                center[1] = center[1] - (d[3] - d[1]) * 0.12
+                scale = (d[2] - d[0] + d[3] - d[1]) / self.face_detector.reference_scale
+            else:
+                scale = (d[2]-d[0])/200
 
-            transform = T.Resize(size = (256,256))
-            inp = transform(torch.from_numpy(image.transpose((2, 0, 1))).float())           
+            inp = crop(image, center, scale)
+            inp = torch.from_numpy(inp.transpose(
+                (2, 0, 1))).float()
             
-            inp = inp.to(self.device)       
+            inp = inp.to(self.device)
             inp.div_(255.0).unsqueeze_(0)
 
             out = self.face_alignment_net(inp).detach()
@@ -159,12 +150,9 @@ class FaceAlignment:
                 out += flip(self.face_alignment_net(flip(inp)).detach(), is_label=True)
             out = out.cpu().numpy()
 
-            # New option, not using scale nor center values
-            pts, pts_img, scores = get_preds_fromhm(out)
+            pts, pts_img, scores = get_preds_fromhm(out, center.numpy(), scale)
             pts, pts_img = torch.from_numpy(pts), torch.from_numpy(pts_img)
-            resize_scale = image.shape[1]/out.shape[2] #(358/64)
-            pts, pts_img = pts.view(68, 2) * resize_scale, pts.view(68, 2) * resize_scale 
-
+            pts, pts_img = pts.view(68, 2) * 4, pts_img.view(68, 2)
             scores = scores.squeeze(0)
 
             if self.landmarks_type == LandmarksType._3D:
