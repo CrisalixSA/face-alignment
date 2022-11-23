@@ -116,10 +116,12 @@ class FaceAlignment:
                     (landmark, landmark_score, None         )
         """
         image = get_image(image_or_path)
-        try:
-            detected_faces = self.face_detector.detect_from_image(image.copy())
-        except:
-            raise Exception(f"A list of bounding boxes or a face_detector method is needed.")
+        
+        if detected_faces is None:
+            try:
+                detected_faces = self.face_detector.detect_from_image(image.copy())
+            except:
+                raise Exception(f"A list of bounding boxes or a face_detector method is needed.")
 
         if len(detected_faces) == 0:
             warnings.warn("No faces were detected.")
@@ -210,6 +212,7 @@ class FaceAlignment:
                     (landmark, None,           detected_face)
                     (landmark, landmark_score, None         )
         """
+
         if detected_faces is None:
             detected_faces = self.face_detector.detect_from_batch(image_batch)
 
