@@ -1,5 +1,3 @@
-from core_lib.utilities import logger
-
 import os
 import sys
 import errno
