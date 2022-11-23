@@ -116,7 +116,6 @@ class FaceAlignment:
                     (landmark, landmark_score, None         )
         """
         image = get_image(image_or_path)
-        detected_faces = None
         try:
             detected_faces = self.face_detector.detect_from_image(image.copy())
         except:
