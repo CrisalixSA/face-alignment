@@ -3,6 +3,9 @@ import warnings
 from enum import IntEnum
 from distutils.version import LooseVersion
 
+import time
+from core_lib.utilities import logger
+
 from .utils import *
 
 class LandmarksType(IntEnum):
@@ -116,7 +119,7 @@ class FaceAlignment:
                     (landmark, landmark_score, None         )
         """
         image = get_image(image_or_path)
-        
+
         if detected_faces is None:
             try:
                 detected_faces = self.face_detector.detect_from_image(image.copy())
@@ -148,15 +151,21 @@ class FaceAlignment:
             inp = inp.to(self.device)
             inp.div_(255.0).unsqueeze_(0)
 
+            start = time.time()
             out = self.face_alignment_net(inp).detach()
             if self.flip_input:
                 out += flip(self.face_alignment_net(flip(inp)).detach(), is_label=True)
             out = out.cpu().numpy()
-
+            final = time.time()
+            logger.info(f'Total time model inference: {final-start}')
+            
+            start_hm = time.time() 
             pts, pts_img, scores = get_preds_fromhm(out, center.numpy(), scale)
             pts, pts_img = torch.from_numpy(pts), torch.from_numpy(pts_img)
             pts, pts_img = pts.view(68, 2) * 4, pts_img.view(68, 2)
             scores = scores.squeeze(0)
+            final_hm = time.time()
+            logger.info(f'Total time predictions from hm: {final_hm-start_hm}')
 
             if self.landmarks_type == LandmarksType._3D:
                 heatmaps = np.zeros((68, 256, 256), dtype=np.float32)
