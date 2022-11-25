@@ -3,9 +3,6 @@ import warnings
 from enum import IntEnum
 from distutils.version import LooseVersion
 
-import time
-from core_lib.utilities import logger
-
 from .utils import *
 
 class LandmarksType(IntEnum):
@@ -152,13 +149,10 @@ class FaceAlignment:
             inp.div_(255.0).unsqueeze_(0)
 
             torch._C._set_graph_executor_optimize(False)
-            start = time.time()
             out = self.face_alignment_net(inp).detach()
             if self.flip_input:
                 out += flip(self.face_alignment_net(flip(inp)).detach(), is_label=True)
             out = out.cpu().numpy()
-            final = time.time()
-            logger.info(f'Total time model inference: {final-start}')
             torch._C._set_graph_executor_optimize(True)
 
             pts, pts_img, scores = get_preds_fromhm(out, center.numpy(), scale)
