@@ -151,6 +151,7 @@ class FaceAlignment:
             inp = inp.to(self.device)
             inp.div_(255.0).unsqueeze_(0)
 
+            torch._C._set_graph_executor_optimize(False)
             start = time.time()
             out = self.face_alignment_net(inp).detach()
             if self.flip_input:
@@ -158,14 +159,12 @@ class FaceAlignment:
             out = out.cpu().numpy()
             final = time.time()
             logger.info(f'Total time model inference: {final-start}')
-            
-            start_hm = time.time() 
+            torch._C._set_graph_executor_optimize(True)
+
             pts, pts_img, scores = get_preds_fromhm(out, center.numpy(), scale)
             pts, pts_img = torch.from_numpy(pts), torch.from_numpy(pts_img)
             pts, pts_img = pts.view(68, 2) * 4, pts_img.view(68, 2)
             scores = scores.squeeze(0)
-            final_hm = time.time()
-            logger.info(f'Total time predictions from hm: {final_hm-start_hm}')
 
             if self.landmarks_type == LandmarksType._3D:
                 heatmaps = np.zeros((68, 256, 256), dtype=np.float32)
