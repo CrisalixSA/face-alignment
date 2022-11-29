@@ -139,6 +139,7 @@ class FaceAlignment:
                 center[1] = center[1] - (d[3] - d[1]) * 0.12
                 scale = (d[2] - d[0] + d[3] - d[1]) / self.face_detector.reference_scale
             else:
+                # Everywhere the variable scale is multiplied by 200 for no reason, if we divide here by 200 it works
                 scale = (d[2]-d[0])/200
 
             inp = crop(image, center, scale)
@@ -148,6 +149,7 @@ class FaceAlignment:
             inp = inp.to(self.device)
             inp.div_(255.0).unsqueeze_(0)
 
+            # Disabling optimizations: https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md#disabling-optimizations
             torch._C._set_graph_executor_optimize(False)
             out = self.face_alignment_net(inp).detach()
             if self.flip_input:
