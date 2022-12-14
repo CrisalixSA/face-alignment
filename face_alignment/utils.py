@@ -145,7 +145,6 @@ def crop(image, center, scale, resolution=256.0):
     return newImg
 
 
-@jit(nopython=True)
 def transform_np(point, center, scale, resolution, invert=False):
     """Generate and affine transformation matrix.
 
@@ -203,7 +202,6 @@ def get_preds_fromhm(hm, center=None, scale=None):
     return preds, preds_orig, scores
 
 
-@jit(nopython=True)
 def _get_preds_fromhm(hm, idx, center=None, scale=None):
     """Obtain (x,y) coordinates given a set of N heatmaps and the
     coresponding locations of the maximums. If the center

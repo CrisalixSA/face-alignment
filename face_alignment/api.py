@@ -27,7 +27,7 @@ class NetworkSize(IntEnum):
 
 
 class FaceAlignment:
-    def __init__(self, landmarks_type, face_align_model_path, depth_pred_model_path, network_size=NetworkSize.LARGE,
+    def __init__(self, landmarks_type, face_align_model_path, depth_pred_model_path=None, network_size=NetworkSize.LARGE,
                  device='cuda', flip_input=False, face_detector='sfd', face_detector_kwargs=None, verbose=False):
         self.device = device
         self.flip_input = flip_input
@@ -140,11 +140,14 @@ class FaceAlignment:
             inp = inp.to(self.device)
             inp.div_(255.0).unsqueeze_(0)
 
+            # Disabling optimizations: https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md#disabling-optimizations
+            torch._C._set_graph_executor_optimize(False)
             out = self.face_alignment_net(inp).detach()
             if self.flip_input:
                 out += flip(self.face_alignment_net(flip(inp)).detach(), is_label=True)
             out = out.cpu().numpy()
-
+            torch._C._set_graph_executor_optimize(True)
+            
             pts, pts_img, scores = get_preds_fromhm(out, center.numpy(), scale)
             pts, pts_img = torch.from_numpy(pts), torch.from_numpy(pts_img)
             pts, pts_img = pts.view(68, 2) * 4, pts_img.view(68, 2)
