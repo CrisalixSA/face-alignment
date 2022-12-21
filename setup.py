@@ -33,8 +33,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as readme_file:
     long_description = readme_file.read()
 
-#VERSION = find_version('face_alignment', '__init__.py')
-VERSION = '2.0.0' #TODO Remove hardcoded value 
+VERSION = find_version('face_alignment', '__init__.py')
 
 requirements = [
     'torch',
