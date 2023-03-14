@@ -1,7 +1,6 @@
 import io
 import os
 import re
-from os import path
 from setuptools import setup, find_packages
 from pkg_resources import parse_requirements
 from codecs import open     # To use consistent encodings
