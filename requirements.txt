@@ -1,4 +1,8 @@
-opencv-python
+torch
+numpy
 scipy>=0.17.0
 scikit-image
+opencv-python
+tqdm
 numba
+enum34
