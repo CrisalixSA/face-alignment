@@ -8,6 +8,7 @@ from codecs import open     # To use consistent encodings
 
 PACKAGE_NAME = 'face_alignment'
 PACKAGE_PATH = PACKAGE_NAME
+VERSION_FILE_PATH = os.path.join(PACKAGE_PATH, '__init__.py')
 REQUIREMENTS_FILE_PATH = 'requirements.txt'
 
 
@@ -28,7 +29,7 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-__version__ = find_version(PACKAGE_NAME, '__init__.py')
+__version__ = find_version(VERSION_FILE_PATH)
 
 with open(REQUIREMENTS_FILE_PATH, 'r') as requirements_file:
     text = requirements_file.read()
