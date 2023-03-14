@@ -37,14 +37,10 @@ requirements_text = re.sub(r'^\s*\-e\s+([^=]+)=([^\n]+)', r'\2 @ \1=\2', text, f
 
 setup(
     name=PACKAGE_NAME,
-    package_dir={PACKAGE_NAME: PACKAGE_PATH},
-    version=__version__,
+    version='0.0.8',
     packages=find_packages(
         exclude=(
             'test',
         ),
     ),
-    install_requires=[
-        req.__str__() for req in parse_requirements(requirements_text)
-    ],
 )
