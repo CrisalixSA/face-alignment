@@ -2,7 +2,7 @@ torch
 numpy
 scipy>=0.17.0
 scikit-image
-opencv-python
+opencv-python-headless
 tqdm
 numba
 enum34
