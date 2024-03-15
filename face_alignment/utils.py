@@ -333,7 +333,7 @@ def get_image(image_or_path):
             print("error opening file :: ", image_or_path)
             return None
     elif isinstance(image_or_path, torch.Tensor):
-        image = image_or_path.detach().cpu().numpy()
+        image = image_or_path
     else:
         image = image_or_path
 

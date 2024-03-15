@@ -142,7 +142,8 @@ class FaceAlignment:
 
             # Disabling optimizations: https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md#disabling-optimizations
             torch._C._set_graph_executor_optimize(False)
-            out = self.face_alignment_net(inp).detach()
+            out = self.face_alignment_net(inp)
+            return out
             if self.flip_input:
                 out += flip(self.face_alignment_net(flip(inp)).detach(), is_label=True)
             out = out.cpu().numpy()
