@@ -36,19 +36,22 @@ def batch_detect(net, img_batch, device):
     B, C, H, W = img_batch.shape
     orig_size = min(H, W)
 
-    if isinstance(img_batch, torch.Tensor):
-        img_batch = img_batch.cpu().numpy()
+    #if isinstance(img_batch, torch.Tensor):
+    #    img_batch = img_batch.cpu().numpy()
 
-    img_batch = img_batch.transpose((0, 2, 3, 1))
+    #img_batch = img_batch.transpose((0, 2, 3, 1))
+    
+    img_batch = torch.nn.functional.interpolate(img_batch,(128,128))
 
-    imgs, (xshift, yshift) = resize_and_crop_batch(img_batch, 128)
-    preds = net.predict_on_batch(imgs)
+    #imgs, (xshift, yshift) = resize_and_crop_batch(img_batch, 128)
+    preds = net.predict_on_batch(img_batch)
     bboxlists = []
+    shift = torch.tensor([0,0,0,0])
     for pred in preds:
-        shift = np.array([xshift, yshift] * 2)
+        #shift = np.array([xshift, yshift] * 2)
         scores = pred[:, -1:]
-        locs = np.concatenate((pred[:, 1:2], pred[:, 0:1], pred[:, 3:4], pred[:, 2:3]), axis=1)
-        bboxlists.append(np.concatenate((locs * orig_size + shift, scores), axis=1))
+        locs = torch.cat((pred[:, 1:2], pred[:, 0:1], pred[:, 3:4], pred[:, 2:3]), axis=1)
+        bboxlists.append(torch.cat((locs * orig_size + shift, scores), axis=1))
 
     return bboxlists
 

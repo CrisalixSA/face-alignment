@@ -124,24 +124,23 @@ def crop(image, center, scale, resolution=256.0):
     br = transform([resolution, resolution], center, scale, resolution, True)
     # pad = math.ceil(torch.norm((ul - br).float()) / 2.0 - (br[0] - ul[0]) / 2.0)
     if image.ndim > 2:
-        newDim = np.array([br[1] - ul[1], br[0] - ul[0],
-                           image.shape[2]], dtype=np.int32)
-        newImg = np.zeros(newDim, dtype=np.uint8)
+        newDim = torch.tensor([image.shape[0], br[1] - ul[1], br[0] - ul[0],
+                           ], dtype=torch.int32)
+        newImg = torch.zeros(*newDim, dtype=torch.uint8)
     else:
-        newDim = np.array([br[1] - ul[1], br[0] - ul[0]], dtype=np.int)
-        newImg = np.zeros(newDim, dtype=np.uint8)
-    ht = image.shape[0]
-    wd = image.shape[1]
-    newX = np.array(
-        [max(1, -ul[0] + 1), min(br[0], wd) - ul[0]], dtype=np.int32)
-    newY = np.array(
-        [max(1, -ul[1] + 1), min(br[1], ht) - ul[1]], dtype=np.int32)
-    oldX = np.array([max(1, ul[0] + 1), min(br[0], wd)], dtype=np.int32)
-    oldY = np.array([max(1, ul[1] + 1), min(br[1], ht)], dtype=np.int32)
-    newImg[newY[0] - 1:newY[1], newX[0] - 1:newX[1]
-           ] = image[oldY[0] - 1:oldY[1], oldX[0] - 1:oldX[1], :]
-    newImg = cv2.resize(newImg, dsize=(int(resolution), int(resolution)),
-                        interpolation=cv2.INTER_LINEAR)
+        newDim = torch.tensor([br[1] - ul[1], br[0] - ul[0]], dtype=torch.int32)
+        newImg = torch.zeros(newDim, dtype=torch.uint8)
+    ht = image.shape[1]
+    wd = image.shape[2]
+    newX = torch.tensor(
+        [max(1, -ul[0] + 1), min(br[0], wd) - ul[0]], dtype=torch.int32)
+    newY = torch.tensor(
+        [max(1, -ul[1] + 1), min(br[1], ht) - ul[1]], dtype=torch.int32)
+    oldX = torch.tensor([max(1, ul[0] + 1), min(br[0], wd)], dtype=torch.int32)
+    oldY = torch.tensor([max(1, ul[1] + 1), min(br[1], ht)], dtype=torch.int32)
+    newImg[:, newY[0] - 1:newY[1], newX[0] - 1:newX[1]
+           ] = image[:, oldY[0] - 1:oldY[1], oldX[0] - 1:oldX[1]]
+    newImg = torch.nn.functional.interpolate(newImg.unsqueeze(0), (int(resolution),int(resolution))).squeeze()
     return newImg
 
 

@@ -209,8 +209,8 @@ class BlazeFace(nn.Module):
             - x,y-coordinates for the 6 keypoints
             - confidence score
         """
-        if isinstance(x, np.ndarray):
-            x = torch.from_numpy(x).permute((0, 3, 1, 2))
+        #if isinstance(x, np.ndarray):
+        #    x = torch.from_numpy(x).permute((0, 3, 1, 2))
 
         assert x.shape[1] == 3
         assert x.shape[2] == 128
@@ -221,8 +221,8 @@ class BlazeFace(nn.Module):
         x = self._preprocess(x)
 
         # 2. Run the neural network:
-        with torch.no_grad():
-            out = self.__call__(x)
+        # with torch.no_grad():
+        out = self.__call__(x)
 
         # 3. Postprocess the raw predictions:
         detections = self._tensors_to_detections(out[0], out[1], self.anchors)
