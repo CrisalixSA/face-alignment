@@ -113,75 +113,76 @@ class FaceAlignment:
                     (landmark, None,           detected_face)
                     (landmark, landmark_score, None         )
         """
-        #image = get_image(image_or_path)
+        image = get_image(image_or_path)
 
-        # if detected_faces is None:
-        #     detected_faces = self.face_detector.detect_from_image(image)
+        if detected_faces is None:
+            detected_faces = self.face_detector.detect_from_image(image)
 
-        # if len(detected_faces) == 0:
-        #     warnings.warn("No faces were detected.")
-        #     if return_bboxes or return_landmark_score:
-        #         return None, None, None
-        #     else:
-        #         return None
+        if len(detected_faces) == 0:
+            warnings.warn("No faces were detected.")
+            if return_bboxes or return_landmark_score:
+                return None, None, None
+            else:
+                return None
 
-        # landmarks = []
-        # landmarks_scores = []
-        # for i, d in enumerate(detected_faces):
-        #     center = torch.tensor(
-        #         [d[2] - (d[2] - d[0]) / 2.0, d[3] - (d[3] - d[1]) / 2.0])
-        #     center[1] = center[1] - (d[3] - d[1]) * 0.12
-        #     scale = (d[2] - d[0] + d[3] - d[1]) / self.face_detector.reference_scale
+        landmarks = []
+        landmarks_scores = []
+        for i, d in enumerate(detected_faces):
+            center = torch.tensor(
+                [d[2] - (d[2] - d[0]) / 2.0, d[3] - (d[3] - d[1]) / 2.0])
+            center[1] = center[1] - (d[3] - d[1]) * 0.12
+            scale = (d[2] - d[0] + d[3] - d[1]) / self.face_detector.reference_scale
 
-        #     inp = crop(image, center, scale)
-        inp = image_or_path
+            inp = crop(image, center, scale)
+            #inp = torch.from_numpy(inp.transpose(
+            #    (2, 0, 1))).float()
 
-        inp = inp.to(self.device).float()
-        inp.div_(255.0)
+            inp = inp.to(self.device).float()
+            inp.div_(255.0).unsqueeze_(0)
 
-        # Disabling optimizations: https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md#disabling-optimizations
-        #torch._C._set_graph_executor_optimize(False)
-        out = self.face_alignment_net(inp)
-        return out
-        #     if self.flip_input:
-        #         out += flip(self.face_alignment_net(flip(inp)).detach(), is_label=True)
-        #     out = out.cpu().numpy()
-        #     torch._C._set_graph_executor_optimize(True)
+            # Disabling optimizations: https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md#disabling-optimizations
+            torch._C._set_graph_executor_optimize(False)
+            out = self.face_alignment_net(inp)
+            return out, center, scale
+            if self.flip_input:
+                out += flip(self.face_alignment_net(flip(inp)).detach(), is_label=True)
+            out = out.cpu().numpy()
+            torch._C._set_graph_executor_optimize(True)
             
-        #     pts, pts_img, scores = get_preds_fromhm(out, center.numpy(), scale)
-        #     pts, pts_img = torch.from_numpy(pts), torch.from_numpy(pts_img)
-        #     pts, pts_img = pts.view(68, 2) * 4, pts_img.view(68, 2)
-        #     scores = scores.squeeze(0)
+            pts, pts_img, scores = get_preds_fromhm(out, center.numpy(), scale)
+            pts, pts_img = torch.from_numpy(pts), torch.from_numpy(pts_img)
+            pts, pts_img = pts.view(68, 2) * 4, pts_img.view(68, 2)
+            scores = scores.squeeze(0)
 
-        #     if self.landmarks_type == LandmarksType._3D:
-        #         heatmaps = np.zeros((68, 256, 256), dtype=np.float32)
-        #         for i in range(68):
-        #             if pts[i, 0] > 0 and pts[i, 1] > 0:
-        #                 heatmaps[i] = draw_gaussian(
-        #                     heatmaps[i], pts[i], 2)
-        #         heatmaps = torch.from_numpy(
-        #             heatmaps).unsqueeze_(0)
+            if self.landmarks_type == LandmarksType._3D:
+                heatmaps = np.zeros((68, 256, 256), dtype=np.float32)
+                for i in range(68):
+                    if pts[i, 0] > 0 and pts[i, 1] > 0:
+                        heatmaps[i] = draw_gaussian(
+                            heatmaps[i], pts[i], 2)
+                heatmaps = torch.from_numpy(
+                    heatmaps).unsqueeze_(0)
 
-        #         heatmaps = heatmaps.to(self.device)
-        #         depth_pred = self.depth_prediciton_net(
-        #             torch.cat((inp, heatmaps), 1)).data.cpu().view(68, 1)
-        #         pts_img = torch.cat(
-        #             (pts_img, depth_pred * (1.0 / (256.0 / (200.0 * scale)))), 1)
+                heatmaps = heatmaps.to(self.device)
+                depth_pred = self.depth_prediciton_net(
+                    torch.cat((inp, heatmaps), 1)).data.cpu().view(68, 1)
+                pts_img = torch.cat(
+                    (pts_img, depth_pred * (1.0 / (256.0 / (200.0 * scale)))), 1)
 
-        #     landmarks.append(pts_img.numpy())
-        #     landmarks_scores.append(scores)
+            landmarks.append(pts_img.numpy())
+            landmarks_scores.append(scores)
 
-        # if not return_bboxes:
-        #     detected_faces = None
-        # if not return_landmark_score:
-        #     landmarks_scores = None
-        # if return_bboxes or return_landmark_score:
-        #     return landmarks, landmarks_scores, detected_faces
-        # else:
-        #     return landmarks
+        if not return_bboxes:
+            detected_faces = None
+        if not return_landmark_score:
+            landmarks_scores = None
+        if return_bboxes or return_landmark_score:
+            return landmarks, landmarks_scores, detected_faces
+        else:
+            return landmarks
 
     #@torch.no_grad()
-    def get_landmarks_from_batch(self, image_batch, detected_faces=True, return_bboxes=False,
+    def get_landmarks_from_batch(self, image_batch, detected_faces=None, return_bboxes=False,
                                  return_landmark_score=False):
         """Predict the landmarks for each face present in the image.
 
@@ -207,27 +208,32 @@ class FaceAlignment:
                     (landmark, landmark_score, None         )
         """
 
-        if detected_faces is True:
+        if detected_faces is None:
             detected_faces = self.face_detector.detect_from_batch(image_batch)
 
-        # if len(detected_faces) == 0:
-        #     warnings.warn("No faces were detected.")
-        #     if return_bboxes or return_landmark_score:
-        #         return None, None, None
-        #     else:
-        #         return None
+        if len(detected_faces) == 0:
+            warnings.warn("No faces were detected.")
+            if return_bboxes or return_landmark_score:
+                return None, None, None
+            else:
+                return None
 
-        # landmarks = []
-        # landmarks_scores_list = []
-        # # A batch for each frame
-        # #return detected_faces[0]
-        # for i, faces in enumerate(detected_faces):
-        res = self.get_landmarks_from_image(
-                image_batch,
-                #detected_faces=faces,
-        return_landmark_score=return_landmark_score,
-        )
-        return res
+        landmarks = []
+        centers = []
+        scales = []
+        landmarks_scores_list = []
+        # A batch for each frame
+        for i, faces in enumerate(detected_faces):
+            res, center, scale = self.get_landmarks_from_image(
+                image_batch[i],
+                detected_faces=faces,
+                return_landmark_score=return_landmark_score,
+            )
+            centers.append(center)
+            scales.append(scale)
+            landmarks.append(res.squeeze(0))
+        return torch.stack(landmarks), torch.stack(centers), torch.stack(scales)
+            # return res
             # if return_landmark_score:
             #     landmark_set, landmarks_scores, _ = res
             #     landmarks_scores_list.append(landmarks_scores)

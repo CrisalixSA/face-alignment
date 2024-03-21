@@ -140,7 +140,7 @@ def crop(image, center, scale, resolution=256.0):
     oldY = torch.tensor([max(1, ul[1] + 1), min(br[1], ht)], dtype=torch.int32)
     newImg[:, newY[0] - 1:newY[1], newX[0] - 1:newX[1]
            ] = image[:, oldY[0] - 1:oldY[1], oldX[0] - 1:oldX[1]]
-    newImg = torch.nn.functional.interpolate(newImg.unsqueeze(0), (int(resolution),int(resolution))).squeeze()
+    newImg = torch.nn.functional.interpolate(newImg.unsqueeze(0), (int(resolution), int(resolution))).squeeze()
     return newImg
 
 
@@ -335,11 +335,6 @@ def get_image(image_or_path):
         image = image_or_path
     else:
         image = image_or_path
-
-    if image.ndim == 2:
-        image = color.gray2rgb(image)
-    elif image.ndim == 4:
-        image = image[..., :3]
 
     return image
 
