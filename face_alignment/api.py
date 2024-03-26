@@ -123,7 +123,8 @@ class FaceAlignment:
             if return_bboxes or return_landmark_score:
                 return None, None, None
             else:
-                return None
+                #dummy return
+                return torch.tensor([]), torch.tensor([]), torch.tensor([])
 
         landmarks = []
         landmarks_scores = []

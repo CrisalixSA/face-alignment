@@ -228,7 +228,8 @@ class BlazeFace(nn.Module):
         detections = self._tensors_to_detections(out[0], out[1], self.anchors)
 
         # 4. Non-maximum suppression to remove overlapping detections:
-        return [detection[0].unsqueeze(0) for detection in detections] if len(detections) > 0 else detections
+        #if len(detections) > 0:
+        return [detection[0].unsqueeze(0) for detection in detections] if detections[0].shape[0] > 0 else detections
         filtered_detections = []
         for i in range(len(detections)):
             faces = self._weighted_non_max_suppression(detections[i])
