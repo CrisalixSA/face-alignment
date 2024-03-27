@@ -229,7 +229,10 @@ class BlazeFace(nn.Module):
 
         # 4. Non-maximum suppression to remove overlapping detections:
         #if len(detections) > 0:
-        return [detection[0].unsqueeze(0) for detection in detections] if detections[0].shape[0] > 0 else detections
+        if detections[0].shape[0] > 0:
+            return detections[0].unsqueeze(0)
+        else:
+            return []
         filtered_detections = []
         for i in range(len(detections)):
             faces = self._weighted_non_max_suppression(detections[i])

@@ -215,9 +215,9 @@ class FaceAlignment:
         if len(detected_faces) == 0:
             warnings.warn("No faces were detected.")
             if return_bboxes or return_landmark_score:
-                return None, None, None
+                return torch.tensor([]), torch.tensor([]), torch.tensor([])
             else:
-                return None
+                return torch.tensor([]), torch.tensor([]), torch.tensor([])
 
         landmarks = []
         centers = []
